@@ -45,7 +45,7 @@ async def handle_text_message(message: types.Message):
     if message.location is not None:
         await handle_location(message)
     else:
-        response, _ = await utils.generate_text(message.text)
+        response = await utils.generate_text(message.text)
         await message.answer(response, reply_markup=get_standard_keyboard())
 
 async def handle_location(message: types.Message):
