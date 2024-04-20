@@ -15,7 +15,7 @@ def get_standart_keyboard():
 @router.message(Command("start"))
 async def start(message: Message):
     reply = "Привет!"
-    await message.answer(reply, get_standart_keyboard())
+    await message.answer(reply, reply_markup = get_standart_keyboard())
 
 
 @router.message(F.text == "Получить информацию")
