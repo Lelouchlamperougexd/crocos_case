@@ -4,6 +4,9 @@ from aiogram.types import Message
 from aiogram.filters import Command
 import config
 import utils
+from aiogram import flags
+from aiogram.fsm.context import FSMContext
+
 router = Router()
 
 def get_standard_keyboard():
@@ -37,11 +40,13 @@ async def handle_preferences(message: types.Message):
         await message.answer("Информация о достопремичательностях", reply_markup = types.ReplyKeyboardMarkup(keyboard=[buttons], one_time_keyboard=True))
 
 
-
 @router.message()
 async def handle_text_message(message: types.Message):
     if message.location is not None:
         await handle_location(message)
+    else:
+        response, _ = await utils.generate_text(message.text)
+        await message.answer(response, reply_markup=get_standard_keyboard())
 
 async def handle_location(message: types.Message):
     lat = message.location.latitude
