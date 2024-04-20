@@ -6,7 +6,7 @@ import openai
 import config
 router = Router()
 
-def get_standart_keyboard():
+def get_standard_keyboard():
     keyboard = types.ReplyKeyboardMarkup(keyboard = [[
         types.KeyboardButton(text = "Отправить свою геолокацию", request_location=True),
         types.KeyboardButton(text = "Построить маршрут"),
@@ -17,12 +17,24 @@ def get_standart_keyboard():
 @router.message(Command("start"))
 async def start(message: Message):
     reply = "Привет!"
-    await message.answer(reply, reply_markup = get_standart_keyboard())
+    await message.answer(reply, reply_markup = get_standard_keyboard())
 
 
 @router.message(F.text == "Получить информацию о достопремичательностях")
 async def handle_preferences(message: types.Message):
-    await message.answer("Информация о достопремичательностях", reply_markup = get_standart_keyboard())
+    buttons = []
+    with  sqlite3.connect('db.sqlite') as connection :
+        cursor = connection.cursor()
+        cursor.execute("SELECT name FROM places")
+        names = cursor.fetchall()
+        print(names)
+        for name in names:
+            buttons.append(types.KeyboardButton(text = name[0]))
+        cursor.close()
+    if names == []:
+        await message.answer("Нет информации о достопремичательностях", reply_markup=get_standard_keyboard())
+    else:
+        await message.answer("Информация о достопремичательностях", reply_markup = types.ReplyKeyboardMarkup(keyboard=[buttons], one_time_keyboard=True))
 
 openai.api_key = config.openai_api_key
 
@@ -60,4 +72,4 @@ async def handle_location(message: types.Message):
         connection.commit()
         cursor.close()
     reply = "Какой то ответ"
-    await message.answer(reply, reply_markup=get_standart_keyboard())
+    await message.answer(reply, reply_markup=get_standard_keyboard())
