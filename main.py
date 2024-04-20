@@ -15,6 +15,7 @@ async def main():
     with  sqlite3.connect('db.sqlite') as connection :
         cursor = connection.cursor()
         cursor.execute("CREATE TABLE IF NOT EXISTS users (telegram_id INT PRIMARY KEY, lang REAL, long REAL)")
+        cursor.execute("CREATE TABLE IF NOT EXISTS places (city VARCHAR, name VARCHAR(50) , description VARCHAR, start TEXT, end TEXT, address VARCHAR(80))")
         cursor.close()
     logging.basicConfig(level=logging.INFO)
     bot = Bot(token=config.BOT_TOKEN)
