@@ -2,7 +2,7 @@ import sqlite3
 from aiogram import types, F, Router
 from aiogram.types import Message
 from aiogram.filters import Command
-
+import config
 router = Router()
 
 def get_standart_keyboard():
@@ -26,6 +26,22 @@ async def handle_preferences(message: types.Message):
         types.KeyboardButton(text = "Об экскурсиях"),
     ]])
     await message.answer("О чём вы хотите получить информацию", reply_markup = keyboard)
+
+openai.api_key = config.openai_api_key
+
+async def handle_question(message: types.Message):
+    question = message.text
+    try:
+        response = openai.Completion.create(
+            engine="davinci",
+            prompt=question,
+            temperature=0.5,
+            max_tokens=100
+        )
+        answer = response.choices[0].text.strip()
+        await message.answer(answer, reply_markup=get_standard_keyboard())
+    except Exception as e:
+        await message.answer("Извините, возникла ошибка при обработке запроса.", reply_markup=get_standard_keyboard())
 
 
 @router.message()
