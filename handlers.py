@@ -58,24 +58,25 @@ async def handle_text_message(message: types.Message):
         place = data[place_ind]
         reply = f"""
 🏷Название: 
-{place[0]}
+{place[0] if place[0] != 'None' else "Нет данных"}
 
 💬Описание: 
-{place[1]}
+{place[1] if place[1] != 'None' else "Нет данных"}
 
 📝Историческое и культурное значнеие: 
-{place[2]}
+{place[2] if place[2] != 'None' else "Нет данных"}
 
 💵Прайслист:
-{place[3]}
+{place[3] if place[3] != 'None' else "Нет данных"}
 
-🕔Время работы: {place[4]}-{place[5]}
+🕔Время работы: {place[4] if place[4] != 'None' else "Нет данных" }-{place[5] if place[5] != 'None' else "Нет данных"}
 
-🗺Адрес: {place[6]}
+🗺Адрес: {place[6] if place[6] != 'None' else "Нет данных"}
 
-📞Телефон: {place[7]}
+📞Телефон: {place[7] if place[7] != 'None' else "Нет данных"}
 
-🚍Как добраться: {place[8]}
+🚍Как добраться: {place[8] if place[8] != 'None' else "Нет данных"}
+https://maps.google.com/maps?q={place[0].replace(" ", "+").replace("»", "").replace("«", "").replace("<<", "").replace(">>", "")}
 """
         await message.answer(reply, reply_markup = get_standard_keyboard())
         return
