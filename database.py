@@ -30,6 +30,6 @@ sights = [
 with  sqlite3.connect('db.sqlite') as connection :
     cursor = connection.cursor()
     for sight in sights:
-        cursor.execute(f"INSERT INTO places (name, description, value, price, start, end, address, phone, transport) VALUES ({sight['name']}, {sight['description']}, {sight['value']}, {sight['price']}, {sight['start']}, {sight['end']}, {sight['address']}, {sight['phone']}, {sight['transport']})")
+        cursor.execute(f"INSERT INTO places (name, description, value, price, start, end, address, phone, transport) VALUES ('{sight['name']}', '{sight['description']}', '{sight['value']}', '{sight['price']}', '{sight['start']}', '{sight['end']}', '{sight['address']}', '{sight['phone']}', '{sight['transport']})'")
     
     cursor.close()
