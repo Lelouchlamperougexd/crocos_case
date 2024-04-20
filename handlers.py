@@ -36,22 +36,6 @@ async def handle_preferences(message: types.Message):
     else:
         await message.answer("Информация о достопремичательностях", reply_markup = types.ReplyKeyboardMarkup(keyboard=[buttons], one_time_keyboard=True))
 
-openai.api_key = config.openai_api_key
-
-async def handle_question(message: types.Message):
-    question = message.text
-    try:
-        response = openai.Completion.create(
-            engine="davinci",
-            prompt=question,
-            temperature=0.5,
-            max_tokens=100
-        )
-        answer = response.choices[0].text.strip()
-        await message.answer(answer, reply_markup=get_standard_keyboard())
-    except Exception as e:
-        await message.answer("Извините, возникла ошибка при обработке запроса.", reply_markup=get_standard_keyboard())
-
 
 
 @router.message()
