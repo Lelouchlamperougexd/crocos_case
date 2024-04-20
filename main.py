@@ -9,6 +9,11 @@ from handlers import router
 
 import config
 
+from aiogram.fsm.state import StatesGroup, State
+
+class Gen(StatesGroup):
+    text_prompt = State()
+
 async def main():
     with  sqlite3.connect('db.sqlite') as connection :
         cursor = connection.cursor()

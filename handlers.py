@@ -2,8 +2,8 @@ import sqlite3
 from aiogram import types, F, Router
 from aiogram.types import Message
 from aiogram.filters import Command
-import openai
 import config
+import utils
 router = Router()
 
 def get_standard_keyboard():
