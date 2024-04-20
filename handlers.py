@@ -6,96 +6,180 @@ import config
 import utils
 from aiogram import flags
 from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import StatesGroup, State
+import places
+import asyncio
+from typing import List
+import datetime
+
 
 router = Router()
 
-def get_standard_keyboard():
-    keyboard = types.ReplyKeyboardMarkup(keyboard = [[
-        types.KeyboardButton(text = "Отправить свою геолокацию", request_location=True),
+class ConstructPath(StatesGroup):
+    places = State()
+    travel_mode = State()
+    location = State()
+
+@router.message(Command('cancel'))
+@router.message(F.text == 'Отменить')
+async def cancel_handler(message: types.Message, state: FSMContext):
+    current_state = await state.get_state()
+    if current_state is None:
+        return
+
+    await state.finish()
+    await message.reply('Вы отменили своё действие.', reply_markup=get_standard_keyboard())
+
+def get_standard_keyboard(state: State = None):
+    buttons = [
         types.KeyboardButton(text = "Построить маршрут"),
-        types.KeyboardButton(text = "Получить информацию о достопремичательностях"),
-    ]], resize_keyboard=True, is_persistent=True)
+        types.KeyboardButton(text = "Получить информацию о достопримечательностях"),
+    ]
+    keyboard = types.ReplyKeyboardMarkup(keyboard = [buttons], resize_keyboard=True, is_persistent=True)
     return keyboard
 
 @router.message(Command("start"))
 async def start(message: Message):
-    reply = "Привет!"
+    reply = f"Здравствуйте, {message.from_user.first_name}! Чем могу быть полезен?"
     await message.answer(reply, reply_markup = get_standard_keyboard())
 
 
-@router.message(F.text == "Получить информацию о достопремичательностях")
+@router.message(F.text == "Получить информацию о достопримечательностях")
 async def handle_preferences(message: types.Message):
     buttons = []
-    with  sqlite3.connect('db.sqlite') as connection :
-        cursor = connection.cursor()
-        cursor.execute("SELECT name FROM places")
-        names = cursor.fetchall()
-        for name in names:
-            buttons.append(types.KeyboardButton(text = name[0]))
-        cursor.close()
-    if names == []:
-        await message.answer("Нет информации о достопремичательностях", reply_markup=get_standard_keyboard())
+    for place in places.places():
+        buttons.append(types.KeyboardButton(text = place.name[0]))
+    if places.places() == []:
+        await message.answer("Нет информации о достопримечательностях", reply_markup=get_standard_keyboard())
     else:
-        await message.answer("Информация о достопремичательностях", reply_markup = types.ReplyKeyboardMarkup(keyboard=[buttons], one_time_keyboard=True))
+        await message.answer("Выберите информацию о достопримечательности которая вам интересна", reply_markup = types.ReplyKeyboardMarkup(keyboard=[buttons], one_time_keyboard=True))
 
 
+@router.message(F.text == "Построить маршрут")
+async def handle_preferences(message: types.Message, state: FSMContext):
+    text = """
+Выберите интересующие вас достопримечательности (Отправте номера интересующих достопримечательностей через пробел):
+"""
+    for i,val in enumerate(places.places()):
+        text+= f"{i}) {val.name}\n"
+    await state.set_state(ConstructPath.places)
+    buttons = [types.KeyboardButton(text = "Отменить"),]
+    keyboard = types.ReplyKeyboardMarkup(keyboard = [buttons], resize_keyboard=True)
+    await message.answer(text, reply_markup=keyboard)
+
+
+@router.message(ConstructPath.places)
+async def handle_preferences_place(message: types.Message, state: FSMContext):
+    place_indexes = [int(i) for i in message.text.split()]
+    await state.update_data(places = [val for i,val in enumerate(places.places()) if i in place_indexes])
+    buttons = [types.KeyboardButton(text = "Отменить"),]
+    keyboard = types.ReplyKeyboardMarkup(keyboard = [buttons], resize_keyboard=True)
+    await message.answer("""Теперь выберите способ передвижения
+0) На машине
+1) Пешком
+2) На велосипеде
+3) На общественном транспорте
+""", reply_markup=keyboard)
+    await state.set_state(ConstructPath.travel_mode)
+
+@router.message(ConstructPath.travel_mode)
+async def handle_travel_mode(message: types.Message, state: FSMContext):
+    mode = ("driving","walking","bicycling","transit")[int(message.text)]
+    await state.update_data(travel_mode = mode)
+    buttons = [
+        types.KeyboardButton(text = "Отменить"),
+        types.KeyboardButton(text = "Отправить свою геолокацию", request_location=True),
+    ]
+    keyboard = types.ReplyKeyboardMarkup(keyboard = [buttons], resize_keyboard=True)
+    await message.answer("Теперь нужно дать доступ к местоположению", reply_markup=keyboard)
+    await state.set_state(ConstructPath.location)
+
+@router.message(ConstructPath.location)
+async def handle_travel_mode(message: types.Message, state: FSMContext):
+    await state.update_data(location = message.location)
+    path = await build_path(message, state)
+    data = await state.get_data()
+    if (len(path[0][1:]) == 0) :
+        reply = "Извените, но все достопримечательности в данный момент закрыты"
+        await message.answer(reply, reply_markup=get_standard_keyboard())
+        await state.clear()
+        return
+    if len(path[0][1:]) < len(data['places']):
+        reply = """
+Вот в каком порядке вам следует пройтись по достопримечательностям(к сожелению остальные выбранные достопримечательности вы не успеете пройти):
+        """
+    else:
+        reply = """
+Вот в каком порядке вам следует пройтись по достопримечательностям:
+        """
+    for i,val in enumerate(path[0][1:]):
+        reply+=f"{i+1}) {val.name}\n"
+    await message.answer(reply, reply_markup=get_standard_keyboard())
+    await state.clear()
+
+async def build_path(message: Message, state: FSMContext):
+    data = await state.get_data()
+    lat = data['location'].latitude
+    lon = data['location'].longitude
+    best_path = await build_path_rec([places.Place(address=f"{lat},{lon}")], data['places'], data['travel_mode'])
+    return best_path
+
+async def build_path_rec(current_path: List[places.Place], places_left: List[places.Place], mode: str, time: int = 0):
+    best_path = (None, -1)
+    if (len(places_left) == 0):
+        return (current_path, time)
+    for i in range(len(places_left)):
+        opens = [int(i) for i in places_left[i].start.split(":")]
+        closes = [int(i) for i in places_left[i].end.split(":")]
+        opens = datetime.time(opens[0], opens[1])
+        closes = datetime.time(closes[0], closes[1])
+        opens = datetime.datetime.combine(datetime.datetime.now(), opens)
+        closes = datetime.datetime.combine(datetime.datetime.now(), closes)
+        current_time = datetime.datetime.now() + datetime.timedelta(seconds=time)
+        if (opens <= current_time <= closes):
+            time_to = (await utils.fetch_from_google(current_path[-1].address, places_left[i].address, mode))['routes'][0]['legs'][0]['duration']['value']
+            path = await build_path_rec(current_path + [places_left[i]], places_left[:i]+places_left[i+1:], mode, time+time_to)
+            if best_path[1] == -1 or best_path[1] > path[1]:
+                best_path = path
+    if best_path[1] == -1 or len(best_path[0]) < len(current_path):
+        best_path = (current_path, time)
+        
+    return best_path
+
+    
 @router.message()
 async def handle_text_message(message: types.Message):
-    if message.location is not None:
-        await handle_location(message)
-
     names = []
-    data = []
-    with  sqlite3.connect('db.sqlite') as connection :
-        cursor = connection.cursor()
-        cursor.execute("SELECT * FROM places")
-        data = cursor.fetchall()
-        for i in data:
-            names.append(i[0])
-        cursor.close()
+    for i in places.places():
+        names.append(i.name)
     if (message.text in names):
         place_ind = names.index(message.text)
-        place = data[place_ind]
+        place: places.Place = places.places()[place_ind]
         reply = f"""
 🏷Название: 
-{place[0] if place[0] != 'None' else "Нет данных"}
+{place.name}
 
 💬Описание: 
-{place[1] if place[1] != 'None' else "Нет данных"}
+{place.description}
 
 📝Историческое и культурное значнеие: 
-{place[2] if place[2] != 'None' else "Нет данных"}
+{place.value}
 
 💵Прайслист:
-{place[3] if place[3] != 'None' else "Нет данных"}
+{place.price}
 
-🕔Время работы: {place[4] if place[4] != 'None' else "Нет данных" }-{place[5] if place[5] != 'None' else "Нет данных"}
+🕔Время работы: {place.start}-{place.end}
 
-🗺Адрес: {place[6] if place[6] != 'None' else "Нет данных"}
+🗺Адрес: {place.address}
 
-📞Телефон: {place[7] if place[7] != 'None' else "Нет данных"}
+📞Телефон: {place.phone}
 
-🚍Как добраться: {place[8] if place[8] != 'None' else "Нет данных"}
-https://maps.google.com/maps?q={place[0].replace(" ", "+").replace("»", "").replace("«", "").replace("<<", "").replace(">>", "")}
-"""
+🚍Как добраться: {place.transport}
+{place.url}"""
+        
         await message.answer(reply, reply_markup = get_standard_keyboard())
         return
     
-    response, _ = await utils.generate_text(message.text)
-    await message.answer(response, reply_markup=get_standard_keyboard())
+    #response, _ = await utils.generate_text(message.text)
+    #await message.answer(response, reply_markup=get_standard_keyboard())
     
-
-async def handle_location(message: types.Message):
-    lat = message.location.latitude
-    lon = message.location.longitude
-    with  sqlite3.connect('db.sqlite') as connection :
-        cursor = connection.cursor()
-        cursor.execute(f"SELECT * FROM users WHERE telegram_id = {message.from_user.id}")
-        if cursor.fetchone() is None:
-            cursor.execute(f"INSERT INTO users VALUES ({message.from_user.id}, '{lat}', '{lon}')")
-        else:
-            cursor.execute(f"UPDATE users SET lat = {lat}, long = {lon} WHERE telegram_id = {message.from_user.id}")
-        connection.commit()
-        cursor.close()
-    reply = "Какой то ответ"
-    await message.answer(reply, reply_markup=get_standard_keyboard())
