@@ -14,7 +14,7 @@ async def main():
         cursor = connection.cursor()
 
         cursor.execute("CREATE TABLE IF NOT EXISTS users (telegram_id INT PRIMARY KEY, lat REAL, long REAL)")
-        cursor.execute("CREATE TABLE IF NOT EXISTS places (city VARCHAR, name VARCHAR(50) , description VARCHAR, start TEXT, end TEXT, address VARCHAR(80))")
+        cursor.execute("CREATE TABLE IF NOT EXISTS places (name VARCHAR, description VARCHAR, value VARCHAR, price VARCHAR, start TEXT, end TEXT, address VARCHAR, phone VARCHAR, transport VARCHAR)")
         connection.commit()
 
         cursor.close()
