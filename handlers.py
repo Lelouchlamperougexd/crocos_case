@@ -18,5 +18,6 @@ async def handle_text_message(message: types.Message):
 async def handle_location(message: types.Message):
     lat = message.location.latitude
     lon = message.location.longitude
+    
     reply = "latitude:  {}\nlongitude: {}".format(lat, lon)
     await message.answer(reply)
