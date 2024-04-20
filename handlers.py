@@ -10,8 +10,8 @@ def get_standart_keyboard():
     keyboard = types.ReplyKeyboardMarkup(keyboard = [[
         types.KeyboardButton(text = "Отправить свою геолокацию", request_location=True),
         types.KeyboardButton(text = "Построить маршрут"),
-        types.KeyboardButton(text = "Получить информацию"),
-    ]])
+        types.KeyboardButton(text = "Получить информацию о достопремичательностях"),
+    ]], resize_keyboard=True, is_persistent=True)
     return keyboard
 
 @router.message(Command("start"))
@@ -20,14 +20,9 @@ async def start(message: Message):
     await message.answer(reply, reply_markup = get_standart_keyboard())
 
 
-@router.message(F.text == "Получить информацию")
+@router.message(F.text == "Получить информацию о достопремичательностях")
 async def handle_preferences(message: types.Message):
-    keyboard = types.ReplyKeyboardMarkup(keyboard = [[
-        types.KeyboardButton(text = "О мероприятиях"),
-        types.KeyboardButton(text = "О достопримечательностях"),
-        types.KeyboardButton(text = "Об экскурсиях"),
-    ]])
-    await message.answer("О чём вы хотите получить информацию", reply_markup = keyboard)
+    await message.answer("Информация о достопремичательностях", reply_markup = get_standart_keyboard())
 
 openai.api_key = config.openai_api_key
 
@@ -46,17 +41,6 @@ async def handle_question(message: types.Message):
         await message.answer("Извините, возникла ошибка при обработке запроса.", reply_markup=get_standard_keyboard())
 
 
-@router.message(F.text == "О мероприятиях")
-async def handle_preferences(message: types.Message):
-    await message.answer("Информация о мероприятиях", reply_markup = get_standart_keyboard())
-
-@router.message(F.text == "О достопримечательностях")
-async def handle_preferences(message: types.Message):
-    await message.answer("Информация о достопремичательностях", reply_markup = get_standart_keyboard())
-
-@router.message(F.text == "Об экскурсиях")
-async def handle_preferences(message: types.Message):
-    await message.answer("Информация об экскурсиях", reply_markup = get_standart_keyboard())
 
 @router.message()
 async def handle_text_message(message: types.Message):
