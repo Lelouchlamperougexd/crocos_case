@@ -2,17 +2,45 @@ import sqlite3
 from aiogram import types, F, Router
 from aiogram.types import Message
 from aiogram.filters import Command
-
+import openai
+import config
 router = Router()
 
-def get_location_keyboard():
-    button = types.KeyboardButton(text = "Отправить свою геолокацию", request_location=True)
-    keyboard = types.ReplyKeyboardMarkup(keyboard= [[button]], one_time_keyboard=True, resize_keyboard=True)
+def get_standart_keyboard():
+    keyboard = types.ReplyKeyboardMarkup(keyboard = [[
+        types.KeyboardButton(text = "Отправить свою геолокацию", request_location=True),
+        types.KeyboardButton(text = "Построить маршрут"),
+        types.KeyboardButton(text = "Получить информацию о достопремичательностях"),
+    ]], resize_keyboard=True, is_persistent=True)
     return keyboard
 
 @router.message(Command("start"))
 async def start(message: Message):
-    await message.answer("Привет! Я помогу тебе построить маршрут по городу для начала работы предоставь доступ к геолокации.", reply_markup = get_location_keyboard())
+    reply = "Привет!"
+    await message.answer(reply, reply_markup = get_standart_keyboard())
+
+
+@router.message(F.text == "Получить информацию о достопремичательностях")
+async def handle_preferences(message: types.Message):
+    await message.answer("Информация о достопремичательностях", reply_markup = get_standart_keyboard())
+
+openai.api_key = config.openai_api_key
+
+async def handle_question(message: types.Message):
+    question = message.text
+    try:
+        response = openai.Completion.create(
+            engine="davinci",
+            prompt=question,
+            temperature=0.5,
+            max_tokens=100
+        )
+        answer = response.choices[0].text.strip()
+        await message.answer(answer, reply_markup=get_standard_keyboard())
+    except Exception as e:
+        await message.answer("Извините, возникла ошибка при обработке запроса.", reply_markup=get_standard_keyboard())
+
+
 
 @router.message()
 async def handle_text_message(message: types.Message):
@@ -31,5 +59,5 @@ async def handle_location(message: types.Message):
             cursor.execute(f"UPDATE users SET lat = {lat}, long = {lon} WHERE telegram_id = {message.from_user.id}")
         connection.commit()
         cursor.close()
-    reply = "Теперь вы можете..."
-    await message.answer(reply)
+    reply = "Какой то ответ"
+    await message.answer(reply, reply_markup=get_standart_keyboard())
