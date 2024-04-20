@@ -10,11 +10,12 @@ from handlers import router
 
 import config
 
-
 async def main():
     with  sqlite3.connect('db.sqlite') as connection :
         cursor = connection.cursor()
-        cursor.execute("CREATE TABLE IF NOT EXISTS users (telegram_id INT PRIMARY KEY, lang REAL, long REAL)")
+        cursor.execute("CREATE TABLE IF NOT EXISTS users (telegram_id INT PRIMARY KEY, lat REAL, long REAL)")
+        #cursor.execute("CREATE TABLE IF NOT EXISTS places ()")
+        connection.commit()
         cursor.close()
     logging.basicConfig(level=logging.INFO)
     bot = Bot(token=config.BOT_TOKEN)
