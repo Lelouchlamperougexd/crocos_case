@@ -46,6 +46,8 @@ async def handle_question(message: types.Message):
 async def handle_text_message(message: types.Message):
     if message.location is not None:
         await handle_location(message)
+    else:
+        await handle_question(message)
 
 async def handle_location(message: types.Message):
     lat = message.location.latitude
