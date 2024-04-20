@@ -8,7 +8,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from handlers import router
 
 import config
-
+import openai
 async def main():
     with  sqlite3.connect('db.sqlite') as connection :
         cursor = connection.cursor()
