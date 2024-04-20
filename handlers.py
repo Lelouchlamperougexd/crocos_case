@@ -8,6 +8,7 @@ router = Router()
 def get_standart_keyboard():
     keyboard = types.ReplyKeyboardMarkup(keyboard = [[
         types.KeyboardButton(text = "Отправить свою геолокацию", request_location=True),
+        types.KeyboardButton(text = "Построить маршрут"),
         types.KeyboardButton(text = "Получить информацию"),
     ]])
     return keyboard
@@ -43,6 +44,18 @@ async def handle_question(message: types.Message):
     except Exception as e:
         await message.answer("Извините, возникла ошибка при обработке запроса.", reply_markup=get_standard_keyboard())
 
+
+@router.message(F.text == "О мероприятиях")
+async def handle_preferences(message: types.Message):
+    await message.answer("Информация о мероприятиях", reply_markup = get_standart_keyboard())
+
+@router.message(F.text == "О достопримечательностях")
+async def handle_preferences(message: types.Message):
+    await message.answer("Информация о достопремичательностях", reply_markup = get_standart_keyboard())
+
+@router.message(F.text == "Об экскурсиях")
+async def handle_preferences(message: types.Message):
+    await message.answer("Информация об экскурсиях", reply_markup = get_standart_keyboard())
 
 @router.message()
 async def handle_text_message(message: types.Message):
