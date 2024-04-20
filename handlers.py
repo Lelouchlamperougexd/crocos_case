@@ -5,14 +5,28 @@ from aiogram.filters import Command
 
 router = Router()
 
-def get_location_keyboard():
-    button = types.KeyboardButton(text = "Отправить свою геолокацию", request_location=True)
-    keyboard = types.ReplyKeyboardMarkup(keyboard= [[button]], one_time_keyboard=True, resize_keyboard=True)
+def get_standart_keyboard():
+    keyboard = types.ReplyKeyboardMarkup(keyboard = [[
+        types.KeyboardButton(text = "Отправить свою геолокацию", request_location=True),
+        types.KeyboardButton(text = "Получить информацию"),
+    ]])
     return keyboard
 
 @router.message(Command("start"))
 async def start(message: Message):
-    await message.answer("Привет! Я помогу тебе построить маршрут по городу для начала работы предоставь доступ к геолокации.", reply_markup = get_location_keyboard())
+    reply = "Привет!"
+    await message.answer(reply, get_standart_keyboard())
+
+
+@router.message(F.text == "Получить информацию")
+async def handle_preferences(message: types.Message):
+    keyboard = types.ReplyKeyboardMarkup(keyboard = [[
+        types.KeyboardButton(text = "О мероприятиях"),
+        types.KeyboardButton(text = "О достопримечательностях"),
+        types.KeyboardButton(text = "Об экскурсиях"),
+    ]])
+    await message.answer("О чём вы хотите получить информацию", reply_markup = keyboard)
+
 
 @router.message()
 async def handle_text_message(message: types.Message):
@@ -31,5 +45,5 @@ async def handle_location(message: types.Message):
             cursor.execute(f"UPDATE users SET lat = {lat}, long = {lon} WHERE telegram_id = {message.from_user.id}")
         connection.commit()
         cursor.close()
-    reply = "Теперь вы можете..."
-    await message.answer(reply)
+    reply = "Какой то ответ"
+    await message.answer(reply, reply_markup=get_standart_keyboard())
