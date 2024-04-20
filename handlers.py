@@ -2,13 +2,10 @@ import sqlite3
 from aiogram import types, F, Router
 from aiogram.types import Message
 from aiogram.filters import Command
-<<<<<<< Updated upstream
 import config
 import utils
 from aiogram import flags
 from aiogram.fsm.context import FSMContext
-=======
->>>>>>> Stashed changes
 
 router = Router()
 
@@ -46,12 +43,7 @@ async def handle_preferences(message: types.Message):
 async def handle_text_message(message: types.Message):
     if message.location is not None:
         await handle_location(message)
-<<<<<<< Updated upstream
-    else:
-        response, _ = await utils.generate_text(message.text)
-        await message.answer(response, reply_markup=get_standard_keyboard())
-=======
-        return
+
     names = []
     data = []
     with  sqlite3.connect('db.sqlite') as connection :
@@ -88,7 +80,9 @@ async def handle_text_message(message: types.Message):
         await message.answer(reply, reply_markup = get_standard_keyboard())
         return
     
->>>>>>> Stashed changes
+    response, _ = await utils.generate_text(message.text)
+    await message.answer(response, reply_markup=get_standard_keyboard())
+    
 
 async def handle_location(message: types.Message):
     lat = message.location.latitude
