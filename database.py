@@ -20,7 +20,7 @@ sights = [
 Детям-сиротам и детям, оставшимся без попечения родителей, которые не достигли 18 лет – вход бесплатный (при предъявлении подтверждающих документов).
 
 Детям до 5 (пяти) лет – вход бесплатный (при предъявлении подтверждающих документов).''', 'start': '10:00', 'end': '19:00', 'address': ' Астана, Коргалжинское шоссе, 2/1', 'phone': '+7 (7172) 79-04-39', 'transport': '№ 32 , 44 , 28'},
-    {'name': 'Музей энергии будущего «Нур-Алем» (ЭКСПО)', 'description': ''},
+    {'name': 'Музей энергии будущего «Нур-Алем» (ЭКСПО)', 'description': ''' '''},
     {}
 ]
 
@@ -30,6 +30,6 @@ sights = [
 with  sqlite3.connect('db.sqlite') as connection :
     cursor = connection.cursor()
     for sight in sights:
-        cursor.execute(f"INSERT INTO places (name, description, value, price, start, end, address, phone, transport) VALUES ('{sight['name']}', '{sight['description']}', '{sight['value']}', '{sight['price']}', '{sight['start']}', '{sight['end']}', '{sight['address']}', '{sight['phone']}', '{sight['transport']})'")
+        cursor.execute(f"INSERT INTO places (name, description, value, price, start, end, address, phone, transport) VALUES ('{sight['name']}', '{sight['description']}', '{sight['value']}', '{sight['price']}', '{sight['start']}', '{sight['end']}', '{sight['address']}', '{sight['phone']}', '{sight['transport']}')")
     
     cursor.close()
