@@ -2,10 +2,13 @@ import sqlite3
 from aiogram import types, F, Router
 from aiogram.types import Message
 from aiogram.filters import Command
+<<<<<<< Updated upstream
 import config
 import utils
 from aiogram import flags
 from aiogram.fsm.context import FSMContext
+=======
+>>>>>>> Stashed changes
 
 router = Router()
 
@@ -30,7 +33,6 @@ async def handle_preferences(message: types.Message):
         cursor = connection.cursor()
         cursor.execute("SELECT name FROM places")
         names = cursor.fetchall()
-        print(names)
         for name in names:
             buttons.append(types.KeyboardButton(text = name[0]))
         cursor.close()
@@ -44,9 +46,49 @@ async def handle_preferences(message: types.Message):
 async def handle_text_message(message: types.Message):
     if message.location is not None:
         await handle_location(message)
+<<<<<<< Updated upstream
     else:
         response, _ = await utils.generate_text(message.text)
         await message.answer(response, reply_markup=get_standard_keyboard())
+=======
+        return
+    names = []
+    data = []
+    with  sqlite3.connect('db.sqlite') as connection :
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM places")
+        data = cursor.fetchall()
+        for i in data:
+            names.append(i[0])
+        cursor.close()
+    if (message.text in names):
+        place_ind = names.index(message.text)
+        place = data[place_ind]
+        reply = f"""
+🏷Название: 
+{place[0]}
+
+💬Описание: 
+{place[1]}
+
+📝Историческое и культурное значнеие: 
+{place[2]}
+
+💵Прайслист:
+{place[3]}
+
+🕔Время работы: {place[4]}-{place[5]}
+
+🗺Адрес: {place[6]}
+
+📞Телефон: {place[7]}
+
+🚍Как добраться: {place[8]}
+"""
+        await message.answer(reply, reply_markup = get_standard_keyboard())
+        return
+    
+>>>>>>> Stashed changes
 
 async def handle_location(message: types.Message):
     lat = message.location.latitude
