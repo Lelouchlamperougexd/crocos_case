@@ -11,6 +11,7 @@ import places
 import asyncio
 from typing import List
 import datetime
+import gemini
 
 
 router = Router()
@@ -110,7 +111,7 @@ async def handle_travel_mode(message: types.Message, state: FSMContext):
         return
     await state.update_data(location = message.location)
     data = await state.get_data()
-    await message.answer(f"Ожидайте, примерное время {len(data['places'])*6} секунд", reply_markup=types.ReplyKeyboardRemove())
+    await message.answer(f"Ожидайте, примерное время ожидания {len(data['places'])*6} секунд", reply_markup=types.ReplyKeyboardRemove())
     path = await build_path(message, state)
     
     if (len(path[0]) == 0) :
@@ -234,6 +235,8 @@ async def handle_text_message(message: types.Message):
         await message.answer(reply, reply_markup = get_standard_keyboard())
         return
     
+    await message.answer(gemini.get_text(message.text), reply_markup = get_standard_keyboard())
+
     #response = await utils.generate_text(message.text)
     #await message.answer(response, reply_markup=get_standard_keyboard())
     
