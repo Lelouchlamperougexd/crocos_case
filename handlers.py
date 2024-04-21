@@ -78,10 +78,10 @@ async def handle_preferences_place(message: types.Message, state: FSMContext):
     keyboard = types.ReplyKeyboardMarkup(keyboard = [buttons], resize_keyboard=True)
     await message.answer("""Теперь выберите способ передвижения
 0) На машине
-1) Пешком
-2) На велосипеде
-3) На общественном транспорте
-""", reply_markup=keyboard)
+1) Пешком"""
+#2) На велосипеде
+#3) На общественном транспорте"""
+, reply_markup=keyboard)
     await state.set_state(ConstructPath.travel_mode)
 
 @router.message(ConstructPath.travel_mode)
@@ -94,10 +94,10 @@ async def handle_travel_mode(message: types.Message, state: FSMContext):
     mode = ("driving","walking","bicycling","transit")[int(message.text)]
     await state.update_data(travel_mode = mode)
     buttons = [
-        types.KeyboardButton(text = "Отменить"),
-        types.KeyboardButton(text = "Отправить свою геолокацию", request_location=True),
+        [types.KeyboardButton(text = "Отменить")],
+        [types.KeyboardButton(text = "Отправить свою геолокацию", request_location=True)],
     ]
-    keyboard = types.ReplyKeyboardMarkup(keyboard = [buttons], resize_keyboard=True)
+    keyboard = types.ReplyKeyboardMarkup(keyboard = buttons, resize_keyboard=True)
     await message.answer("Теперь нужно дать доступ к местоположению", reply_markup=keyboard)
     await state.set_state(ConstructPath.location)
 
@@ -109,14 +109,16 @@ async def handle_travel_mode(message: types.Message, state: FSMContext):
         await cancel_operation(message, state)
         return
     await state.update_data(location = message.location)
-    path = await build_path(message, state)
     data = await state.get_data()
-    if (len(path[0][1:]) == 0) :
+    await message.answer(f"Ожидайте, примерное время {len(data['places'])*6} секунд", reply_markup=types.ReplyKeyboardRemove())
+    path = await build_path(message, state)
+    
+    if (len(path[0]) == 0) :
         reply = "Извините, но все достопримечательности в данный момент закрыты"
         await message.answer(reply, reply_markup=get_standard_keyboard())
         await state.clear()
         return
-    if len(path[0][1:]) < len(data['places']):
+    if len(path[0]) < len(data['places']):
         reply = """
 Вот в каком порядке вам следует пройтись по достопримечательностям(к сожелению остальные выбранные достопримечательности вы не успеете пройти):
 """
@@ -124,8 +126,16 @@ async def handle_travel_mode(message: types.Message, state: FSMContext):
         reply = """
 Вот в каком порядке вам следует пройтись по достопримечательностям:
 """
-    for i,val in enumerate(path[0][1:]):
+    url = "https://www.google.com/maps/dir/"
+    lat = data['location'].latitude
+    lon = data['location'].longitude
+    url+=f"{lat},{lon}/"
+    for i,val in enumerate(path[0]):
         reply+=f"{i+1}) {val.name}\n"
+        url += f"{val.address}".replace("/", "%2F") 
+        url += "/"
+    reply += url.replace(" ", "+")
+    print(url.replace(" ", "+"))
     await message.answer(reply, reply_markup=get_standard_keyboard())
     await state.clear()
 
@@ -133,8 +143,40 @@ async def build_path(message: Message, state: FSMContext):
     data = await state.get_data()
     lat = data['location'].latitude
     lon = data['location'].longitude
-    best_path = await build_path_rec([places.Place(address=f"{lat},{lon}")], data['places'], data['travel_mode'])
+    #best_path = await build_path_rec([places.Place(address=f"{lat},{lon}")], data['places'], data['travel_mode'])
+    best_path = await build_path_query(f"{lat},{lon}", data['places'], data['travel_mode'])
     return best_path
+
+async def build_path_query(from_loc:str, sights: List[places.Place], mode:str):
+    data = []
+    for sight in sights:
+        waypoints = ""
+        for val in sights:
+            if val is sight:
+                continue
+            if waypoints != "":
+                waypoints += "|"
+            waypoints+=f"{val.address}"
+        data.append(await utils.fetch_from_google(from_loc, sight.address, mode, waypoints=waypoints))
+    best_path = (None, -1)
+    for i in data:
+        time = 0
+        distance = 0
+        try:
+            place = [j for j in i['routes'][0]['waypoint_order']]+[len(sights)-1]
+        except(IndexError):
+            continue
+        for leg in i['routes'][0]['legs']:
+            time += leg['duration']['value']
+            distance += leg['distance']['value']
+        if best_path[1] == -1 or best_path[1] > time:
+                best_path = (place, time, distance)
+        print((place, time, distance))
+    print(best_path)
+    place = []
+    for i in best_path[0]:
+        place.append(sights[i])
+    return (place, best_path[1], best_path[2])
 
 async def build_path_rec(current_path: List[places.Place], places_left: List[places.Place], mode: str, time: int = 0):
     best_path = (None, -1)
