@@ -138,17 +138,6 @@ sights = [
         'address': 'Астана, Коргалжинское шоссе, 2',
         'phone': '+7 (7172) 79-04-39',
         'transport': '№ 12 , 18 , 21 , 28 , 32 , 43 , 44'
-    },
-    {
-        'name': '',
-        'description': '',
-        'value': '',
-        'price': '',
-        'start': '',
-        'end': '',
-        'address': '',
-        'phone': '',
-        'transport': ''
     }
 ]
 
