@@ -17,7 +17,6 @@ async def main():
     with  sqlite3.connect('db.sqlite') as connection :
         cursor = connection.cursor()
 
-        cursor.execute("CREATE TABLE IF NOT EXISTS users (telegram_id INT PRIMARY KEY, lat REAL, long REAL)")
         cursor.execute("CREATE TABLE IF NOT EXISTS places (name VARCHAR, description VARCHAR, value VARCHAR, price VARCHAR, start TEXT, end TEXT, address VARCHAR, phone VARCHAR, transport VARCHAR)")
         connection.commit()
 
