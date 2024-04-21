@@ -5,9 +5,9 @@ genai.configure(api_key=GOOGLE_API_KEY)
 
 model = genai.GenerativeModel('gemini-pro')
 
-prompt = "Расскажи мне что такое city pass"
-context = open("info.txt", encoding="UTF-8").read()
-prompt = prompt + "\n" + context
-response = model.generate_content(prompt)
-
-print(response.text)
+def get_text(prompt:str):
+    prompt = prompt.lower()
+    context = open("info.txt", encoding="UTF-8").read().lower()
+    prompt = prompt + "\n" + context
+    response = model.generate_content(prompt)
+    return response.text
