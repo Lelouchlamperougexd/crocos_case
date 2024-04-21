@@ -110,7 +110,7 @@ async def handle_travel_mode(message: types.Message, state: FSMContext):
         return
     await state.update_data(location = message.location)
     data = await state.get_data()
-    await message.answer(f"Ожидайте, примерное время {len(data['places'])*6} секунд", reply_markup=types.ReplyKeyboardRemove())
+    await message.answer(f"Ожидайте, примерное время ожидания {len(data['places'])*6} секунд", reply_markup=types.ReplyKeyboardRemove())
     path = await build_path(message, state)
     
     if (len(path[0]) == 0) :
