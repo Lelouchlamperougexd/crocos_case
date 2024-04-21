@@ -20,14 +20,11 @@ class ConstructPath(StatesGroup):
     travel_mode = State()
     location = State()
 
-@router.message(Command('cancel'))
-@router.message(F.text == 'Отменить')
-async def cancel_handler(message: types.Message, state: FSMContext):
+async def cancel_operation(message: types.Message, state: FSMContext):
     current_state = await state.get_state()
-    if current_state is None:
-        return
+    if current_state is not None:
+        await state.clear()
 
-    await state.finish()
     await message.reply('Вы отменили своё действие.', reply_markup=get_standard_keyboard())
 
 def get_standard_keyboard(state: State = None):
@@ -48,7 +45,7 @@ async def start(message: Message):
 async def handle_preferences(message: types.Message):
     buttons = []
     for place in places.places():
-        buttons.append(types.KeyboardButton(text = place.name[0]))
+        buttons.append(types.KeyboardButton(text = place.name))
     if places.places() == []:
         await message.answer("Нет информации о достопримечательностях", reply_markup=get_standard_keyboard())
     else:
@@ -70,6 +67,11 @@ async def handle_preferences(message: types.Message, state: FSMContext):
 
 @router.message(ConstructPath.places)
 async def handle_preferences_place(message: types.Message, state: FSMContext):
+    if (await state.get_state() == None):
+        return
+    if (message.text == "Отменить"):
+        await cancel_operation(message, state)
+        return
     place_indexes = [int(i) for i in message.text.split()]
     await state.update_data(places = [val for i,val in enumerate(places.places()) if i in place_indexes])
     buttons = [types.KeyboardButton(text = "Отменить"),]
@@ -84,6 +86,11 @@ async def handle_preferences_place(message: types.Message, state: FSMContext):
 
 @router.message(ConstructPath.travel_mode)
 async def handle_travel_mode(message: types.Message, state: FSMContext):
+    if (await state.get_state() == None):
+        return
+    if (message.text == "Отменить"):
+        await cancel_operation(message, state)
+        return
     mode = ("driving","walking","bicycling","transit")[int(message.text)]
     await state.update_data(travel_mode = mode)
     buttons = [
@@ -96,6 +103,11 @@ async def handle_travel_mode(message: types.Message, state: FSMContext):
 
 @router.message(ConstructPath.location)
 async def handle_travel_mode(message: types.Message, state: FSMContext):
+    if (await state.get_state() == None):
+        return
+    if (message.text == "Отменить"):
+        await cancel_operation(message, state)
+        return
     await state.update_data(location = message.location)
     path = await build_path(message, state)
     data = await state.get_data()
@@ -107,11 +119,11 @@ async def handle_travel_mode(message: types.Message, state: FSMContext):
     if len(path[0][1:]) < len(data['places']):
         reply = """
 Вот в каком порядке вам следует пройтись по достопримечательностям(к сожелению остальные выбранные достопримечательности вы не успеете пройти):
-        """
+"""
     else:
         reply = """
 Вот в каком порядке вам следует пройтись по достопримечательностям:
-        """
+"""
     for i,val in enumerate(path[0][1:]):
         reply+=f"{i+1}) {val.name}\n"
     await message.answer(reply, reply_markup=get_standard_keyboard())
