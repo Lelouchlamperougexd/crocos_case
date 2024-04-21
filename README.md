@@ -1,4 +1,6 @@
 SmartGuide - Telegram Bot with Gemini.AI and Google Maps Integration
+https://t.me/city_pass_test_bot
+
 Overview
 
 Our project is a Telegram bot designed to provide users with various functionalities using Gemini.AI and Google Maps API. It allows users to interact with Gemini.AI for conversational AI capabilities and utilize Google Maps for information retrieval and route planning. Additionally, the bot utilizes SQLite for data management and persistence.
