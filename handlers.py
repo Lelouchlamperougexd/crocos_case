@@ -11,6 +11,7 @@ import places
 import asyncio
 from typing import List
 import datetime
+import gemini
 
 
 router = Router()
@@ -234,6 +235,8 @@ async def handle_text_message(message: types.Message):
         await message.answer(reply, reply_markup = get_standard_keyboard())
         return
     
+    await message.answer(gemini.get_text(message.text), reply_markup = get_standard_keyboard())
+
     #response = await utils.generate_text(message.text)
     #await message.answer(response, reply_markup=get_standard_keyboard())
     
