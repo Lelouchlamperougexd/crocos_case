@@ -100,7 +100,7 @@ async def handle_travel_mode(message: types.Message, state: FSMContext):
     path = await build_path(message, state)
     data = await state.get_data()
     if (len(path[0][1:]) == 0) :
-        reply = "Извените, но все достопримечательности в данный момент закрыты"
+        reply = "Извините, но все достопримечательности в данный момент закрыты"
         await message.answer(reply, reply_markup=get_standard_keyboard())
         await state.clear()
         return
@@ -180,6 +180,6 @@ async def handle_text_message(message: types.Message):
         await message.answer(reply, reply_markup = get_standard_keyboard())
         return
     
-    #response, _ = await utils.generate_text(message.text)
+    #response = await utils.generate_text(message.text)
     #await message.answer(response, reply_markup=get_standard_keyboard())
     
