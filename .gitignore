@@ -2,5 +2,6 @@ __pycache__/
 .vscode
 .idea
 myvenv
+venv
 db.sqlite
 .pyc

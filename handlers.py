@@ -29,10 +29,10 @@ async def cancel_operation(message: types.Message, state: FSMContext):
 
 def get_standard_keyboard(state: State = None):
     buttons = [
-        types.KeyboardButton(text = "Построить маршрут"),
-        types.KeyboardButton(text = "Получить информацию о достопримечательностях"),
+        [types.KeyboardButton(text = "Построить маршрут")],
+        [types.KeyboardButton(text = "Получить информацию о достопримечательностях")],
     ]
-    keyboard = types.ReplyKeyboardMarkup(keyboard = [buttons], resize_keyboard=True, is_persistent=True)
+    keyboard = types.ReplyKeyboardMarkup(keyboard = buttons, resize_keyboard=True, is_persistent=True)
     return keyboard
 
 @router.message(Command("start"))
@@ -45,11 +45,11 @@ async def start(message: Message):
 async def handle_preferences(message: types.Message):
     buttons = []
     for place in places.places():
-        buttons.append(types.KeyboardButton(text = place.name))
+        buttons.append([types.KeyboardButton(text = place.name)])
     if places.places() == []:
         await message.answer("Нет информации о достопримечательностях", reply_markup=get_standard_keyboard())
     else:
-        await message.answer("Выберите информацию о достопримечательности которая вам интересна", reply_markup = types.ReplyKeyboardMarkup(keyboard=[buttons], one_time_keyboard=True))
+        await message.answer("Выберите информацию о достопримечательности которая вам интересна", reply_markup = types.ReplyKeyboardMarkup(keyboard=buttons, one_time_keyboard=True))
 
 
 @router.message(F.text == "Построить маршрут")
